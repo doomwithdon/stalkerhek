@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+	"encoding/json"
 )
 
 // Start connects to stalker portal, authenticates, starts watchdog etc.

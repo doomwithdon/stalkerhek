@@ -59,6 +59,7 @@ func (p *Portal) authenticate() (err error) {
 		Text string `json:"text"`
 	}
 	var tmp tmpStruct
+	var content
 
 	// Authorize token if credentials are given
 	if p.Username != "" && p.Password != "" {

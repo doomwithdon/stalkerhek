@@ -18,8 +18,15 @@ func (p *Portal) Start() error {
 	}
 
 	// Authorize token if credentials are given
-	if (p.Username != "" && p.Password != "") || (p.DeviceID != "" && p.DeviceID2 != "") {
+	if p.Username != "" && p.Password != "" {
 		if err := p.authenticate(); err != nil {
+			return err
+		}
+	}
+
+	// Authorize token if devoceIDs are given
+	if p.DeviceID != "" && p.DeviceID2 != "" {
+		if err := p.authenticateWithDeviceIDs(); err != nil {
 			return err
 		}
 	}

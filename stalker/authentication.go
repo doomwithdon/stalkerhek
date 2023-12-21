@@ -87,7 +87,10 @@ func (p *Portal) authenticate() (err error) {
 func (p *Portal) authenticateWithDeviceIDs() (err error) {
 	// This HTTP request has different headers from the rest of HTTP requests, so perform it manually
 	type tmpStruct struct {
-		Js *map[string]string `json:"js"`
+		Js struct {
+			Id string `json:"id"`
+			Fname string `json:"fname"`
+			} `json:"js"`
 		Text string `json:"text"`
 	}
 	var tmp tmpStruct

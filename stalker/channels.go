@@ -89,7 +89,7 @@ func (p *Portal) RetrieveChannels() (map[string]*Channel, error) {
 	}
 	var tmp tmpStruct
 
-	content, err := p.httpRequest(p.Location + "?type=itv&action=get_all_channels&force_ch_link_check=&JsHttpRequest=1-xml")
+	content, err := p.httpRequest(p.Location + "?type=itv&action=get_all_channels&JsHttpRequest=1-xml")
 	if err != nil {
 		return nil, err
 	}

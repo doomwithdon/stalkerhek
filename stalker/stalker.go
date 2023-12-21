@@ -90,6 +90,7 @@ func (p *Portal) watchdogUpdate() error {
 				Additional_services_on     string `json:"additional_services_on"`
 			} `json:"data"`
 		} `json:"js"`
+		Text string `json:"text"`
 	}
 	var wd wdStruct
 	content, err := p.httpRequest(p.Location + "?action=get_events&event_active_id=0&init=0&type=watchdog&cur_play_type=1&JsHttpRequest=1-xml")

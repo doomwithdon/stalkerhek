@@ -91,7 +91,7 @@ func (p *Portal) watchdogUpdate() error {
 	}
 	
 	if err := json.Unmarshal(content, &wd); err != nil {
-		log.Fatalln("Watchdog update: "string(content))
+		log.Fatalln("Watchdog update: "+string(content))
 	}
 	
 	return nil

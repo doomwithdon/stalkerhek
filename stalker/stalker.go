@@ -18,7 +18,7 @@ func (p *Portal) Start() error {
 	}
 
 	// Authorize token if credentials are given
-	if p.Username != "" && p.Password != "" {
+	if (p.Username != "" && p.Password != "") || (p.DeviceID != "" && p.DeviceID2 != "") {
 		if err := p.authenticate(); err != nil {
 			return err
 		}

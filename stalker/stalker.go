@@ -86,7 +86,7 @@ func (p *Portal) watchdogUpdate() error {
 	type wdStruct struct {
 		Js struct {
 			Data struct {
-				Msgs    string `json:"msgs"`
+				Msgs    int `json:"msgs"`
 				Additional_services_on     string `json:"additional_services_on"`
 			} `json:"data"`
 		} `json:"js"`

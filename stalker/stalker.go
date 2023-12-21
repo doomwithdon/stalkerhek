@@ -75,9 +75,23 @@ func (p *Portal) httpRequest(link string) ([]byte, error) {
 
 // WatchdogUpdate performs watchdog update request.
 func (p *Portal) watchdogUpdate() error {
-	_, err := p.httpRequest(p.Location + "?action=get_events&event_active_id=0&init=0&type=watchdog&cur_play_type=1&JsHttpRequest=1-xml")
+	type wdStruct struct {
+		Js struct {
+			Data struct {
+				Msgs    string `json:"msgs"`
+				Additional_services_on     string `json:"additional_services_on"`
+			} `json:"data"`
+		} `json:"js"`
+	}
+	var wd wdStruct
+	content, err := p.httpRequest(p.Location + "?action=get_events&event_active_id=0&init=0&type=watchdog&cur_play_type=1&JsHttpRequest=1-xml")
 	if err != nil {
 		return err
 	}
+	
+	if err := json.Unmarshal(content, &wd); err != nil {
+		log.Fatalln(string(content))
+	}
+	
 	return nil
 }

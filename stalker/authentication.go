@@ -59,19 +59,8 @@ func (p *Portal) authenticate() (err error) {
 		Text string `json:"text"`
 	}
 	var tmp tmpStruct
-	var queryString string
-	
-	// Authorize token if credentials are given
-	if p.Username != "" && p.Password != "" {
-		log.Println("Authenticating with Username and Password")
-		queryString = p.Location + "?type=stb&action=do_auth&login=" + p.Username + "&password=" + p.Password + "&device_id=" + p.DeviceID + "&device_id2=" + p.DeviceID2 + "&JsHttpRequest=1-xml"
-	} else if p.DeviceID != "" && p.DeviceID2 != "" {
-		log.Println("Authenticating with DeviceId and DeviceId2")
-		queryString = p.Location + "?type=stb&action=get_profile&JsHttpRequest=1-xml&hd=1&sn=" + p.SerialNumber + "&stb_type=" + p.Model + "&device_id=" + p.DeviceID + "&device_id2=" + p.DeviceID2 + "auth_second_step=1"
-	}
 
-	content, err := p.httpRequest(queryString)
-	
+	content, err := p.httpRequest(p.Location + "?type=stb&action=do_auth&login=" + p.Username + "&password=" + p.Password + "&device_id=" + p.DeviceID + "&device_id2=" + p.DeviceID2 + "&JsHttpRequest=1-xml")
 	if err != nil {
 		log.Println("HTTP authentication request failed")
 		return err
@@ -87,6 +76,40 @@ func (p *Portal) authenticate() (err error) {
 
 	if tmp.Js {
 		// all good
+		return nil
+	}
+
+	// questionable, but probably bad credentials
+	return errors.New("invalid credentials")
+}
+
+// Authenticate with Device IDs
+func (p *Portal) authenticateWithDeviceIDs() (err error) {
+	// This HTTP request has different headers from the rest of HTTP requests, so perform it manually
+	type tmpStruct struct {
+		Js *map[string]string `json:"js"`
+		Text string `json:"text"`
+	}
+	var tmp tmpStruct
+
+	log.Println("Authenticating with DeviceId and DeviceId2")
+	content, err := p.httpRequest(p.Location + "?type=stb&action=get_profile&JsHttpRequest=1-xml&hd=1&sn=" + p.SerialNumber + "&stb_type=" + p.Model + "&device_id=" + p.DeviceID + "&device_id2=" + p.DeviceID2 + "auth_second_step=1")
+	
+	if err != nil {
+		log.Println("HTTP authentication request failed")
+		return err
+	}
+
+	if err = json.Unmarshal(content, &tmp); err != nil {
+		log.Println("Unexpected authentication response")
+		return err
+	}
+
+	log.Println("Logging in to Stalker says:")
+	log.Println(tmp.Text)
+
+	if firstname, fname := tmp.Js["fname"]; fname {
+		log.Println("Authenticated as " + firstname)
 		return nil
 	}
 

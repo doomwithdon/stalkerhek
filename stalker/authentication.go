@@ -64,10 +64,10 @@ func (p *Portal) authenticate() (err error) {
 	// Authorize token if credentials are given
 	if p.Username != "" && p.Password != "" {
 		log.Println("Authenticating with Username and Password")
-		queryString = p.Location + "?type=stb&action=do_auth&login=" + p.Username + "&password=" + p.Password + "&device_id=" + p.DeviceID + "&device_id2=" + p.DeviceID2 + "&JsHttpRequest=1-xml")
+		queryString = p.Location + "?type=stb&action=do_auth&login=" + p.Username + "&password=" + p.Password + "&device_id=" + p.DeviceID + "&device_id2=" + p.DeviceID2 + "&JsHttpRequest=1-xml"
 	} else if p.DeviceID != "" && p.DeviceID2 != "" {
 		log.Println("Authenticating with DeviceId and DeviceId2")
-		queryString = p.Location + "?type=stb&action=get_profile&JsHttpRequest=1-xml&hd=1&sn=" + p.SerialNumber + "&stb_type=" + p.Model + "&device_id=" + p.DeviceID + "&device_id2=" + p.DeviceID2 + "auth_second_step=1")
+		queryString = p.Location + "?type=stb&action=get_profile&JsHttpRequest=1-xml&hd=1&sn=" + p.SerialNumber + "&stb_type=" + p.Model + "&device_id=" + p.DeviceID + "&device_id2=" + p.DeviceID2 + "auth_second_step=1"
 	}
 
 	content, err := p.httpRequest(queryString)

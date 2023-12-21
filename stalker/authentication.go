@@ -111,7 +111,7 @@ func (p *Portal) authenticateWithDeviceIDs() (err error) {
 	log.Println("Logging in to Stalker says:")
 	log.Println(tmp.Text)
 
-	if firstname, fname := tmp.Js.Fname; fname {
+	if firstname := tmp.Js.Fname; firstname {
 		log.Println("Authenticated as " + firstname)
 		return nil
 	}

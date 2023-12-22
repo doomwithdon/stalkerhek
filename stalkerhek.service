@@ -1,13 +1,15 @@
 [Unit]
-Description=Stalkerhek service
-After=network-online.target
+Description=Stalkerhek Service
+After=network.target
+Requires=network.target
 
 [Service]
+Type=simple
 User=myuser
-Group=myuser
-ExecStart=/home/myuser/stalkerhek -config /home/myuser/stalkerhek.yml
+WorkingDirectory=/home/myuser
+ExecStart=/home/myuser/stalkerhek -config /home/myuser/config.yml
 Restart=always
-RestartSec=3
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target

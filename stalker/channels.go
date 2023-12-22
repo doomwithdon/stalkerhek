@@ -39,8 +39,16 @@ func (c *Channel) NewLink(retry bool) (string, error) {
 		// It could be that session has expired and user need to authenticate again.
 		log.Println("Failed to retrieve new link...")
 		if !retry && c.Portal.Username != "" && c.Portal.Password != "" {
-			log.Println("Attempting to re-authenticate user...")
+			log.Println("Attempting to re-authenticate via username and password ...")
 			if err2 := c.Portal.authenticate(); err2 != nil {
+				log.Println("Reauthentication failed...")
+				return "", err
+			}
+			log.Println("Reauthentication success, retrying to retrieve new link...")
+			return c.NewLink(true)
+		} else if !retry && p.DeviceID != "" && p.DeviceID2 != "" {
+			log.Println("Attempting to re-authenticate via Device Ids ...")
+			if err2 := c.Portal.authenticateWithDeviceIDs(); err2 != nil {
 				log.Println("Reauthentication failed...")
 				return "", err
 			}

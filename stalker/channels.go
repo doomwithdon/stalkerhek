@@ -46,7 +46,7 @@ func (c *Channel) NewLink(retry bool) (string, error) {
 			}
 			log.Println("Reauthentication success, retrying to retrieve new link...")
 			return c.NewLink(true)
-		} else if !retry && c.DeviceID != "" && c.DeviceID2 != "" {
+		} else if !retry && c.Portal.DeviceID != "" && c.Portal.DeviceID2 != "" {
 			log.Println("Attempting to re-authenticate via Device Ids ...")
 			if err2 := c.Portal.authenticateWithDeviceIDs(); err2 != nil {
 				log.Println("Reauthentication failed...")

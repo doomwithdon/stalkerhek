@@ -49,8 +49,7 @@ func (p *Portal) Start() error {
 		}()
 	
 		return nil
-	}
-	else {
+	} else {
 		log.Println("Proceeding without Watchdog Updates")
 	}
 }

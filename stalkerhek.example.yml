@@ -10,7 +10,7 @@ portal:
   url: http://domain.example.com/stalker_portal/server/load.php
   time_zone: Europe/Vilnius
   token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  watchdog_update: false
+  enable_watchdog: false
 
 hls:
   enabled: false

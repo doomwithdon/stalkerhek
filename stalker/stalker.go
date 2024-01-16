@@ -37,16 +37,22 @@ func (p *Portal) Start() error {
 	}
 
 	// Run watchdog function every 2 minutes:
-	go func() {
-		for {
-			time.Sleep(2 * time.Minute)
-			if err := p.watchdogUpdate(); err != nil {
-				log.Fatalln(err)
+	if p.WatchDog == true {
+		log.Println("Enabling Watchdog Updates ... ")
+		go func() {
+			for {
+				time.Sleep(2 * time.Minute)
+				if err := p.watchdogUpdate(); err != nil {
+					log.Fatalln(err)
+				}
 			}
-		}
-	}()
-
-	return nil
+		}()
+	
+		return nil
+	}
+	else {
+		log.Println("Proceeding without Watchdog Updates")
+	}
 }
 
 func (p *Portal) httpRequest(link string) ([]byte, error) {

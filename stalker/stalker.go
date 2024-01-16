@@ -47,11 +47,10 @@ func (p *Portal) Start() error {
 				}
 			}
 		}()
-	
-		return nil
 	} else {
 		log.Println("Proceeding without Watchdog Updates")
 	}
+	return nil
 }
 
 func (p *Portal) httpRequest(link string) ([]byte, error) {

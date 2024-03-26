@@ -22,7 +22,7 @@ func (p *Portal) Start() error {
 		if err := p.authenticate(); err != nil {
 			return err
 		}
-	} else if p.DeviceID != "" && p.DeviceID2 != "" {
+	} else if p.DeviceIdAuth == true {
 		if err := p.authenticateWithDeviceIDs(); err != nil {
 			return err
 		}

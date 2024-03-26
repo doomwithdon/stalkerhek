@@ -11,6 +11,7 @@ portal:
   time_zone: Europe/Vilnius
   token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
   enable_watchdog: false
+  device_id_auth: false
 
 hls:
   enabled: false

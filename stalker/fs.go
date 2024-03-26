@@ -39,6 +39,7 @@ type Portal struct {
 	TimeZone     string `yaml:"time_zone"`
 	Token        string `yaml:"token"`
 	WatchDog     bool `yaml:"enable_watchdog"`
+	DeviceIdAuth bool `yaml:"device_id_auth"`
 }
 
 // ReadConfig returns configuration from the file in Portal object

@@ -25,7 +25,7 @@ func (p *Portal) Start() error {
 	}
 
 	// Authorize token if devoceIDs are given
-	if p.DeviceID != "" && p.DeviceID2 != "" {
+	else if p.DeviceID != "" && p.DeviceID2 != "" {
 		if err := p.authenticateWithDeviceIDs(); err != nil {
 			return err
 		}

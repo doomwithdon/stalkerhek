@@ -121,7 +121,7 @@ func (c *Config) validateWithDefaults() error {
 		log.Println("No token given, using random one:", c.Portal.Token)
 	}
 	
-	if c.Portal.WatchDogTime == "" {
+	if c.Portal.WatchDogTime < 0 {
 		c.Portal.WatchDogTime = 2
 		log.Println("No Watchdog update interval provided. Using ", c.Portal.WatchDogTime)
 	}

@@ -34,7 +34,7 @@ func (p *Portal) Start() error {
 	}
 
 	// Run watchdog function every x minutes:
-	if p.WatchDog == true {
+	if p.WatchDogTime > 0 {
 		log.Println("Enabling Watchdog Updates every "+string(p.WatchDogTime)+" Minutes")
 		go func() {
 			for {

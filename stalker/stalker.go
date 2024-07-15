@@ -38,7 +38,7 @@ func (p *Portal) Start() error {
 		log.Println("Enabling Watchdog Updates ... ")
 		go func() {
 			for {
-				time.Sleep(2 * time.Minute)
+				time.Sleep(p.WatchDogTime * time.Minute)
 				if err := p.watchdogUpdate(); err != nil {
 					log.Fatalln(err)
 				}

@@ -39,6 +39,7 @@ type Portal struct {
 	TimeZone     string `yaml:"time_zone"`
 	Token        string `yaml:"token"`
 	WatchDog     bool `yaml:"enable_watchdog"`
+	WatchDogTime string `yaml:"watchdog_time"`
 	DeviceIdAuth bool `yaml:"device_id_auth"`
 }
 
@@ -118,6 +119,11 @@ func (c *Config) validateWithDefaults() error {
 	if c.Portal.Token == "" {
 		c.Portal.Token = randomToken()
 		log.Println("No token given, using random one:", c.Portal.Token)
+	}
+	
+	if c.Portal.WatchDogTime == "" {
+		c.Portal.WatchDogTime = "2"
+		log.Println("No Watchdog update interval provided. Using ", c.Portal.WatchDogTime)
 	}
 
 	return nil

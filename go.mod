@@ -1,4 +1,4 @@
-module github.com/erkexzcx/stalkerhek
+module github.com/CrazeeGhost/stalkerhek
 
 go 1.13
 

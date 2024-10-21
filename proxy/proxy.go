@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/erkexzcx/stalkerhek/stalker"
+	"github.com/CrazeeGhost/stalkerhek/stalker"
 )
 
 var (

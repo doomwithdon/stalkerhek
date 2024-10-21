@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/erkexzcx/stalkerhek/stalker"
+	"github.com/CrazeeGhost/stalkerhek/stalker"
 )
 
 const (

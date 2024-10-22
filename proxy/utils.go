@@ -19,6 +19,8 @@ func getRequest(link string, originalRequest *http.Request) (*http.Response, err
 		case "Cookie":
 			cookieText := "PHPSESSID=null; sn=" + url.QueryEscape(config.Portal.SerialNumber) + "; mac=" + url.QueryEscape(config.Portal.MAC) + "; stb_lang=en; timezone=" + url.QueryEscape(config.Portal.TimeZone) + ";"
 			req.Header.Set("Cookie", cookieText)
+		case "Referer":
+		case "Referrer":
 		default:
 			req.Header.Set(k, v[0])
 		}

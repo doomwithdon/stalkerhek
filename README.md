@@ -1,4 +1,4 @@
-This fork of the original StalkerHek includes authetication using Device IDs when username and password are not provided.
+This fork of the original StalkerHek allows connecting with no autentication or authetication using Device IDs when username and password are not provided.
 
 # Stalkerhek
 

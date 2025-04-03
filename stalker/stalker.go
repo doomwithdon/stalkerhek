@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"time"
+//	"time"
 	"encoding/json"
 )
 
@@ -29,7 +29,7 @@ func (p *Portal) Start() error {
 	}
 
 	// Run watchdog function once to check for errors:
-	if err := p.watchdogUpdate(); err != nil {
+	/*if err := p.watchdogUpdate(); err != nil {
 		return err
 	}
 
@@ -46,7 +46,7 @@ func (p *Portal) Start() error {
 		}()
 	} else {
 		log.Println("Proceeding without Watchdog Updates")
-	}
+	}*/
 	return nil
 }
 

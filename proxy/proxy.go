@@ -13,7 +13,6 @@ import (
 
 var (
 	destination string
-	path string
 
 	config *stalker.Config
 
@@ -37,7 +36,6 @@ func Start(c *stalker.Config, chs map[string]*stalker.Channel) {
 		log.Fatalln(err)
 	}
 	destination = link.Scheme + "://" + link.Host
-	path = link.Path
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", requestHandler)
@@ -163,9 +161,6 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Build (modified) URL
 	finalLink := destination + r.URL.Path
-        if path != "" {
-                finalLink = destination + path
-        }
 	
 	if len(r.URL.RawQuery) != 0 {
 		finalLink += "?" + query.Encode()

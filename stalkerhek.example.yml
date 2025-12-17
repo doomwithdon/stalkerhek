@@ -21,3 +21,15 @@ proxy:
   enabled: false
   bind: 0.0.0.0:8888
   rewrite: false # EXPERIMENTAL! see https://github.com/erkexzcx/stalkerhek/pull/12#issue-607960283
+
+# Administrative web UI
+#
+# If enabled, the application will start a very small HTTP server that
+# serves a form for editing the portal configuration at runtime and
+# includes a button to trigger a restart.  When a restart is requested the
+# process will exit; it is assumed that an external supervisor (systemd,
+# container orchestrator, etc.) will restart the service.  The Bind
+# address controls where the UI listens (e.g. 0.0.0.0:8080).
+admin:
+  enabled: false
+  bind: 0.0.0.0:8080

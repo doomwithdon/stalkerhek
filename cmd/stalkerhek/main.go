@@ -1,13 +1,18 @@
 package main
 
 import (
-	"flag"
-	"log"
-	"sync"
+    "flag"
+    "log"
+    "sync"
 
-	"github.com/CrazeeGhost/stalkerhek/hls"
-	"github.com/CrazeeGhost/stalkerhek/proxy"
-	"github.com/CrazeeGhost/stalkerhek/stalker"
+    "github.com/CrazeeGhost/stalkerhek/hls"
+    "github.com/CrazeeGhost/stalkerhek/proxy"
+    "github.com/CrazeeGhost/stalkerhek/stalker"
+    // Import the admin package which exposes a small web UI for editing
+    // configuration and restarting the application.  This package is
+    // conditionally started based on the configuration contained in
+    // stalker.Config.Admin.
+    "github.com/CrazeeGhost/stalkerhek/admin"
 )
 
 var flagConfig = flag.String("config", "stalkerhek.yml", "path to the config file")
@@ -59,6 +64,21 @@ func main() {
 			wg.Done()
 		}()
 	}
+
+    // Start the administration GUI if enabled.  This runs in its own
+    // goroutine so that the main thread can continue to manage the other
+    // services.  The admin service exposes a simple HTML form at /config
+    // and a restart button at /restart.  It writes updates back to the
+    // configuration file specified by the -config flag and then exits
+    // when a restart is requested.
+    if c.Admin.Enabled {
+        wg.Add(1)
+        go func() {
+            log.Println("Starting admin service...")
+            admin.Start(c, *flagConfig)
+            wg.Done()
+        }()
+    }
 
 	wg.Wait()
 }

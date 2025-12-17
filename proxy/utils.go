@@ -1,9 +1,11 @@
 package proxy
 
 import (
-	"net/http"
-	"net/url"
-	"strings"
+    "io/ioutil"
+    "net/http"
+    "net/url"
+    "strings"
+    "time"
 )
 
 func getRequest(link string, originalRequest *http.Request) (*http.Response, error) {
@@ -26,7 +28,21 @@ func getRequest(link string, originalRequest *http.Request) (*http.Response, err
 		}
 	}
 
-	return http.DefaultClient.Do(req)
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        return nil, err
+    }
+    // Detect Cloudflare challenge pages and retry once after a pause.
+    if (resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusServiceUnavailable) &&
+        (strings.Contains(strings.ToLower(resp.Header.Get("Server")), "cloudflare") || resp.Header.Get("CF-RAY") != "") {
+        // Consume and close body to free the underlying connection.
+        ioutil.ReadAll(resp.Body)
+        resp.Body.Close()
+        time.Sleep(5 * time.Second)
+        return client.Do(req)
+    }
+    return resp, nil
 }
 
 func addHeaders(from, to http.Header) {

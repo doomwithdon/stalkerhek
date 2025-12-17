@@ -23,6 +23,16 @@ type Config struct {
 		Bind    string `yaml:"bind"`
 		Rewrite bool   `yaml:"rewrite"`
 	} `yaml:"proxy"`
+    // Admin section describes settings for the built‑in web administration UI.
+    // When enabled the application will start a simple HTTP server that exposes
+    // a form for editing the portal configuration and a button to restart the
+    // application.  The Admin service listens on the address specified by
+    // Bind.  If enabled, it can be used to update the YAML configuration
+    // dynamically at runtime.  See admin/admin.go for implementation.
+    Admin struct {
+        Enabled bool   `yaml:"enabled"`
+        Bind    string `yaml:"bind"`
+    } `yaml:"admin"`
 }
 
 // Portal represents Stalker portal
@@ -99,9 +109,13 @@ func (c *Config) validateWithDefaults() error {
 		return errors.New("invalid timezone '" + c.Portal.TimeZone + "'")
 	}
 
-	if !c.HLS.Enabled && !c.Proxy.Enabled {
-		return errors.New("no services enabled")
-	}
+    // at least one functional service must be enabled.  The admin UI on its
+    // own is not enough to provide IPTV streams or proxy functionality, so
+    // ensure either the HLS or the Proxy service is turned on.  Admin may
+    // optionally be enabled alongside those services.
+    if !c.HLS.Enabled && !c.Proxy.Enabled {
+        return errors.New("no services enabled")
+    }
 
 	if c.HLS.Enabled && c.HLS.Bind == "" {
 		return errors.New("empty HLS bind")

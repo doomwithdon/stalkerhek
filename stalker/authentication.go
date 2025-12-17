@@ -1,11 +1,13 @@
 package stalker
 
 import (
-	"encoding/json"
-	"errors"
-	"io/ioutil"
-	"log"
-	"net/http"
+    "encoding/json"
+    "errors"
+    "io/ioutil"
+    "log"
+    "net/http"
+    "strings"
+    "time"
 )
 
 // Handshake reserves a offered token in Portal. If offered token is not available - new one will be issued by stalker portal, reservedMAG254 and Stalker's config will be updated.
@@ -16,30 +18,53 @@ func (p *Portal) handshake() error {
 	}
 	var tmp tmpStruct
 
-	req, err := http.NewRequest("GET", p.Location+"?type=stb&action=handshake&token="+p.Token+"&JsHttpRequest=1-xml", nil)
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("User-Agent", "Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 4 rev: 2116 Mobile Safari/533.3")
-	req.Header.Set("X-User-Agent", "Model: "+p.Model+"; Link: Ethernet")
-	req.Header.Set("Cookie", "sn="+p.SerialNumber+"; mac="+p.MAC+"; stb_lang=en; timezone="+p.TimeZone)
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	contents, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	if err = json.Unmarshal(contents, &tmp); err != nil {
-		log.Println(string(contents))
-		return err
-	}
+    // Build handshake request and spoof a browser if a custom user agent is not provided.
+    req, err := http.NewRequest("GET", p.Location+"?type=stb&action=handshake&token="+p.Token+"&JsHttpRequest=1-xml", nil)
+    if err != nil {
+        return err
+    }
+    ua := p.UserAgent
+    if ua == "" {
+        ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+    }
+    req.Header.Set("User-Agent", ua)
+    req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+    req.Header.Set("Accept-Language", "en-US,en;q=0.5")
+    req.Header.Set("Connection", "keep-alive")
+    req.Header.Set("X-User-Agent", "Model: "+p.Model+"; Link: Ethernet")
+    cookieText := "sn=" + p.SerialNumber + "; mac=" + p.MAC + "; stb_lang=en; timezone=" + p.TimeZone
+    if p.Cookies != "" {
+        if !strings.HasSuffix(cookieText, ";") {
+            cookieText += ";"
+        }
+        cookieText += " " + p.Cookies
+    }
+    req.Header.Set("Cookie", cookieText)
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        return err
+    }
+    // Detect Cloudflare challenge and retry once after a pause
+    if (resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusServiceUnavailable) &&
+        (strings.Contains(strings.ToLower(resp.Header.Get("Server")), "cloudflare") || resp.Header.Get("CF-RAY") != "") {
+        ioutil.ReadAll(resp.Body)
+        resp.Body.Close()
+        time.Sleep(5 * time.Second)
+        resp, err = client.Do(req)
+        if err != nil {
+            return err
+        }
+    }
+    defer resp.Body.Close()
+    contents, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        return err
+    }
+    if err = json.Unmarshal(contents, &tmp); err != nil {
+        log.Println(string(contents))
+        return err
+    }
 
 	token, ok := tmp.Js["token"]
 	if !ok || token == "" {

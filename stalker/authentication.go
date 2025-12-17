@@ -61,6 +61,12 @@ func (p *Portal) handshake() error {
     if err != nil {
         return err
     }
+    // Reject HTML responses which likely indicate that access has been blocked.
+    if len(contents) > 0 && contents[0] == '<' {
+        // Log the HTML content to aid debugging.
+        log.Println(string(contents))
+        return errors.New("stalker handshake returned HTML (possibly due to Cloudflare or invalid token)")
+    }
     if err = json.Unmarshal(contents, &tmp); err != nil {
         log.Println(string(contents))
         return err
@@ -91,10 +97,15 @@ func (p *Portal) authenticate() (err error) {
 		return err
 	}
 
-	if err = json.Unmarshal(content, &tmp); err != nil {
-		log.Println("parsing authentication response failed")
-		return err
-	}
+    // Reject HTML responses which likely indicate that access has been blocked or returned an error page.
+    if len(content) > 0 && content[0] == '<' {
+        log.Println(string(content))
+        return errors.New("authentication response was HTML (portal may be blocked by Cloudflare or credentials invalid)")
+    }
+    if err = json.Unmarshal(content, &tmp); err != nil {
+        log.Println("parsing authentication response failed")
+        return err
+    }
 
 	log.Println("Logging in to Stalker says:")
 	log.Println(tmp.Text)
@@ -128,10 +139,15 @@ func (p *Portal) authenticateWithDeviceIDs() (err error) {
 		return err
 	}
 
-	if err = json.Unmarshal(content, &tmp); err != nil {
-		log.Println("Unexpected authentication response")
-		return err
-	}
+    // Reject HTML responses which likely indicate that access has been blocked or returned an error page.
+    if len(content) > 0 && content[0] == '<' {
+        log.Println(string(content))
+        return errors.New("authentication response was HTML (portal may be blocked by Cloudflare or credentials invalid)")
+    }
+    if err = json.Unmarshal(content, &tmp); err != nil {
+        log.Println("Unexpected authentication response")
+        return err
+    }
 
 	log.Println("Logging in to Stalker says:")
 	log.Println(tmp.Text)

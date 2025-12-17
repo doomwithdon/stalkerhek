@@ -50,6 +50,20 @@ type Portal struct {
 	Token        string `yaml:"token"`
 	WatchDogTime int `yaml:"watchdog"`
 	DeviceIdAuth bool `yaml:"device_id_auth"`
+
+    // UserAgent allows overriding the default User‑Agent header used when
+    // connecting to the Stalker portal.  Some middleware (such as
+    // Cloudflare) may challenge unknown clients.  Providing a User‑Agent
+    // string copied from a real browser can help bypass such checks.
+    UserAgent string `yaml:"user_agent"`
+
+    // Cookies allows specifying additional cookies that will be sent with
+    // each request to the Stalker portal.  When the portal is protected
+    // behind Cloudflare, a valid `cf_clearance` cookie obtained by
+    // completing the challenge in a browser can be placed here (e.g.
+    // "cf_clearance=longvalue").  The cookie is appended to the
+    // internally generated cookies.
+    Cookies string `yaml:"cookies"`
 }
 
 // ReadConfig returns configuration from the file in Portal object

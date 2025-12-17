@@ -19,14 +19,30 @@ func getRequest(link string, originalRequest *http.Request) (*http.Response, err
 		case "Authorization":
 			req.Header.Set("Authorization", "Bearer "+config.Portal.Token)
 		case "Cookie":
-			cookieText := "PHPSESSID=null; sn=" + url.QueryEscape(config.Portal.SerialNumber) + "; mac=" + url.QueryEscape(config.Portal.MAC) + "; stb_lang=en; timezone=" + url.QueryEscape(config.Portal.TimeZone) + ";"
-			req.Header.Set("Cookie", cookieText)
+            cookieText := "PHPSESSID=null; sn=" + url.QueryEscape(config.Portal.SerialNumber) + "; mac=" + url.QueryEscape(config.Portal.MAC) + "; stb_lang=en; timezone=" + url.QueryEscape(config.Portal.TimeZone) + ";"
+            // Append additional cookies such as cf_clearance if configured.
+            if config.Portal.Cookies != "" {
+                if !strings.HasSuffix(cookieText, ";") {
+                    cookieText += ";"
+                }
+                cookieText += " " + config.Portal.Cookies
+            }
+            req.Header.Set("Cookie", cookieText)
 		case "Referer":
 		case "Referrer":
 		default:
 			req.Header.Set(k, v[0])
 		}
 	}
+
+    // Override the User‑Agent header to the configured value if provided, or
+    // set a sensible default.  Using a browser User‑Agent reduces the
+    // likelihood of being blocked by middleware.
+    if config.Portal.UserAgent != "" {
+        req.Header.Set("User-Agent", config.Portal.UserAgent)
+    } else if req.Header.Get("User-Agent") == "" {
+        req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")
+    }
 
     client := &http.Client{}
     resp, err := client.Do(req)

@@ -13,6 +13,16 @@ portal:
   watchdog: 5
   device_id_auth: false
 
+  # Optional override values for Cloudflare and similar protection mechanisms.
+  # If your portal is behind Cloudflare, you can provide a valid
+  # cf_clearance cookie (and any other cookies) here to bypass its
+  # protection.  Example: cookies: "cf_clearance=YOURTOKEN"
+  cookies: ""
+
+  # User agent string used when connecting to the portal.  Set this to
+  # mimic the browser you used to obtain the cf_clearance cookie.
+  user_agent: ""
+
 hls:
   enabled: false
   bind: 0.0.0.0:9999

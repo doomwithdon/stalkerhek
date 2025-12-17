@@ -2,6 +2,7 @@ package admin
 
 import (
     "fmt"
+    "html"
     "io/ioutil"
     "net/http"
     "os"
@@ -77,6 +78,9 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
             checked = "checked"
         }
         fmt.Fprintf(w, "Device ID Auth: <input type=\"checkbox\" name=\"device_id_auth\" %s><br>", checked)
+        // Extra fields for Cloudflare support
+        fmt.Fprintf(w, "Cookies: <input name=\"cookies\" value=\"%s\"><br>", html.EscapeString(config.Portal.Cookies))
+        fmt.Fprintf(w, "User Agent: <input name=\"user_agent\" value=\"%s\"><br>", html.EscapeString(config.Portal.UserAgent))
         fmt.Fprintf(w, "<input type=\"submit\" value=\"Save\"></form>")
         // Separate form for restart button
         fmt.Fprintf(w, "<form method=\"POST\" action=\"/restart\"><input type=\"submit\" value=\"Restart\"></form>")
@@ -107,6 +111,9 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
         }
         // Checkbox returns "on" when checked
         config.Portal.DeviceIdAuth = r.FormValue("device_id_auth") == "on"
+        // Update additional Cloudflare fields
+        config.Portal.Cookies = r.FormValue("cookies")
+        config.Portal.UserAgent = r.FormValue("user_agent")
         // Marshal updated configuration back to YAML and write to file
         if out, err := yaml.Marshal(config); err == nil {
             ioutil.WriteFile(configPath, out, 0644)

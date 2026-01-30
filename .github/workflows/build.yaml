@@ -44,14 +44,20 @@ jobs:
       - name: Download modules
         run: go mod download
 
+      - name: Set build metadata
+        run: |
+          echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
       - name: Build
         run: |
           mkdir -p dist
-          go build -ldflags="-s -w" -o dist/stalkerhek-linux-${{ matrix.arch.alias }} ./cmd/stalkerhek
+          go build -ldflags="-s -w" \
+            -o dist/stalkerhek-linux-${{ matrix.arch.alias }}-${{ github.run_id }}-${{ env.SHORT_SHA }} \
+            ./cmd/stalkerhek
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: stalkerhek-linux-${{ matrix.arch.alias }}
-          path: dist/stalkerhek-linux-${{ matrix.arch.alias }}
+          name: stalkerhek-linux-${{ matrix.arch.alias }}-${{ github.run_id }}-${{ env.SHORT_SHA }}
+          path: dist/stalkerhek-linux-${{ matrix.arch.alias }}-${{ github.run_id }}-${{ env.SHORT_SHA }}
           if-no-files-found: error

@@ -1,13 +1,14 @@
 package stalker
 
 import (
-    "encoding/json"
-    "errors"
-    "io/ioutil"
-    "log"
-    "net/http"
-    "strings"
-    "time"
+	"encoding/json"
+	"errors"
+	"io"
+	"log"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
 )
 
 // Handshake reserves a offered token in Portal. If offered token is not available - new one will be issued by stalker portal, reservedMAG254 and Stalker's config will be updated.
@@ -32,32 +33,22 @@ func (p *Portal) handshake() error {
     req.Header.Set("Accept-Language", "en-US,en;q=0.5")
     req.Header.Set("Connection", "keep-alive")
     req.Header.Set("X-User-Agent", "Model: "+p.Model+"; Link: Ethernet")
-    cookieText := "sn=" + p.SerialNumber + "; mac=" + p.MAC + "; stb_lang=en; timezone=" + p.TimeZone
-    if p.Cookies != "" {
-        if !strings.HasSuffix(cookieText, ";") {
-            cookieText += ";"
-        }
-        cookieText += " " + p.Cookies
-    }
+    cookieText := "sn=" + url.QueryEscape(p.SerialNumber) + "; mac=" + url.QueryEscape(p.MAC) + "; stb_lang=en; timezone=" + url.QueryEscape(p.TimeZone)
+	if p.Cookies != "" {
+		if !strings.HasSuffix(cookieText, ";") {
+			cookieText += ";"
+		}
+		cookieText += " " + strings.TrimSpace(p.Cookies)
+	}
     req.Header.Set("Cookie", cookieText)
-    client := &http.Client{}
-    resp, err := client.Do(req)
-    if err != nil {
-        return err
-    }
-    // Detect Cloudflare challenge and retry once after a pause
-    if (resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusServiceUnavailable) &&
-        (strings.Contains(strings.ToLower(resp.Header.Get("Server")), "cloudflare") || resp.Header.Get("CF-RAY") != "") {
-        ioutil.ReadAll(resp.Body)
-        resp.Body.Close()
-        time.Sleep(5 * time.Second)
-        resp, err = client.Do(req)
-        if err != nil {
-            return err
-        }
-    }
-    defer resp.Body.Close()
-    contents, err := ioutil.ReadAll(resp.Body)
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := DoWithCFRetry(client, req, CFRetryMaxAttempts)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	contents, err := io.ReadAll(resp.Body)
     if err != nil {
         return err
     }

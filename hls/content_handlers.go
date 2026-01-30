@@ -35,7 +35,8 @@ func handleContent(cr *ContentRequest) {
 // ####################################################
 
 func handleContentUnknown(cr *ContentRequest) {
-	resp, err := response(cr.ChannelRef.Link)
+	portal := cr.ChannelRef.StalkerChannel.Portal
+	resp, err := response(cr.ChannelRef.Link, portal)
 	if err != nil {
 		cr.ChannelRef.Mux.Unlock()
 		http.Error(cr.ResponseWriter, "internal server error", http.StatusInternalServerError)
@@ -65,7 +66,8 @@ func handleContentHLS(cr *ContentRequest) {
 		link = cr.Channel.HLSLinkRoot + cr.Suffix
 	}
 
-	resp, err := response(link)
+	portal := cr.Channel.StalkerChannel.Portal
+	resp, err := response(link, portal)
 	if err != nil {
 		http.Error(cr.ResponseWriter, "internal server error", http.StatusInternalServerError)
 		log.Println(err)
@@ -94,7 +96,8 @@ func handleEstablishedContentHLS(cr *ContentRequest, resp *http.Response, link s
 // ####################################################
 
 func handleContentMedia(cr *ContentRequest) {
-	resp, err := response(cr.Channel.Link)
+	portal := cr.Channel.StalkerChannel.Portal
+	resp, err := response(cr.Channel.Link, portal)
 	if err != nil {
 		http.Error(cr.ResponseWriter, "internal server error", http.StatusInternalServerError)
 		log.Println(err)

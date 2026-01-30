@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/CrazeeGhost/stalkerhek/stalker"
 )
@@ -37,5 +38,13 @@ func Start(chs map[string]*stalker.Channel, bind string) {
 	mux.HandleFunc("/logo/", logoHandler)
 
 	log.Println("HLS service should be started!")
-	panic(http.ListenAndServe(bind, mux))
+	server := &http.Server{
+		Addr:              bind,
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+	log.Fatal(server.ListenAndServe())
 }

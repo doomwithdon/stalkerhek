@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/CrazeeGhost/stalkerhek/stalker"
 )
@@ -41,7 +42,15 @@ func Start(c *stalker.Config, chs map[string]*stalker.Channel) {
 	mux.HandleFunc("/", requestHandler)
 
 	log.Println("Proxy service should be started!")
-	panic(http.ListenAndServe(config.Proxy.Bind, mux))
+	server := &http.Server{
+		Addr:              config.Proxy.Bind,
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+	log.Fatal(server.ListenAndServe())
 }
 
 func requestHandler(w http.ResponseWriter, r *http.Request) {
@@ -161,7 +170,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Build (modified) URL
 	finalLink := destination + r.URL.Path
-	
+
 	if len(r.URL.RawQuery) != 0 {
 		finalLink += "?" + query.Encode()
 	}

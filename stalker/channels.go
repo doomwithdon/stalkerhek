@@ -2,6 +2,7 @@ package stalker
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/url"
 	"strings"
@@ -56,6 +57,10 @@ func (c *Channel) NewLink(retry bool) (string, error) {
 			return c.NewLink(true)
 		}
 		return "", err
+	}
+
+	if strings.TrimSpace(tmp.Js.Cmd) == "" {
+		return "", errors.New("empty cmd in create_link response")
 	}
 
 	strs := strings.Split(tmp.Js.Cmd, " ")
@@ -117,6 +122,12 @@ func (p *Portal) RetrieveChannels() (map[string]*Channel, error) {
 	// Build channels list and return
 	channels := make(map[string]*Channel, len(tmp.Js.Data))
 	for _, v := range tmp.Js.Data {
+		cmdID := ""
+		chID := ""
+		if len(v.CMDs) > 0 {
+			cmdID = v.CMDs[0].ID
+			chID = v.CMDs[0].CH_ID
+		}
 		channels[v.Name] = &Channel{
 			Title:     v.Name,
 			CMD:       v.Cmd,
@@ -124,8 +135,8 @@ func (p *Portal) RetrieveChannels() (map[string]*Channel, error) {
 			Portal:    p,
 			GenreID:   v.GenreID,
 			Genres:    &genres,
-			CMD_CH_ID: v.CMDs[0].ID,
-			CMD_ID:    v.CMDs[0].CH_ID,
+			CMD_CH_ID: cmdID,
+			CMD_ID:    chID,
 		}
 	}
 

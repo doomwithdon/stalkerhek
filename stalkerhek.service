@@ -8,8 +8,18 @@ Type=simple
 User=myuser
 WorkingDirectory=/home/myuser
 ExecStart=/home/myuser/stalkerhek -config /home/myuser/config.yml
-Restart=always
+Restart=on-failure
 RestartSec=5
+# Hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+ProtectHome=read-only
+AmbientCapabilities=
+CapabilityBoundingSet=
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target

@@ -2,22 +2,25 @@ package hls
 
 import (
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/CrazeeGhost/stalkerhek/stalker"
 )
 
-const userAgent = "Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 4 rev: 2116 Mobile Safari/533.3"
+const userAgentFallback = "Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 4 rev: 2116 Mobile Safari/533.3"
 
-func download(link string) (content []byte, contentType string, err error) {
-	resp, err := response(link)
+func download(link string, portal *stalker.Portal) (content []byte, contentType string, err error) {
+	resp, err := response(link, portal)
 	if err != nil {
 		return nil, "", err
 	}
 	defer resp.Body.Close()
-	content, err = ioutil.ReadAll(resp.Body)
+	content, err = io.ReadAll(resp.Body)
 	return content, resp.Header.Get("Content-Type"), err
 }
 
@@ -30,17 +33,26 @@ var httpClient = &http.Client{
 	CheckRedirect: func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	},
+	Timeout: 30 * time.Second,
 }
 
-func response(link string) (*http.Response, error) {
+func response(link string, portal *stalker.Portal) (*http.Response, error) {
 	req, err := http.NewRequest("GET", link, nil)
 	if err != nil {
 		return nil, err
 	}
+	if portal != nil {
+		stalker.ApplyPortalHeaders(req, portal, stalker.PortalReferer(portal))
+	} else {
+		req.Header.Set("User-Agent", userAgentFallback)
+	}
 
-	req.Header.Set("User-Agent", userAgent)
-
-	resp, err := httpClient.Do(req)
+	var resp *http.Response
+	if portal != nil {
+		resp, err = stalker.DoWithCFRetry(httpClient, req, stalker.CFRetryMaxAttempts)
+	} else {
+		resp, err = httpClient.Do(req)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +73,7 @@ func response(link string) (*http.Response, error) {
 			return nil, errors.New("unknown error occurred")
 		}
 		newLink := linkURL.ResolveReference(redirectURL)
-		return response(newLink.String())
+		return response(newLink.String(), portal)
 	}
 
 	return nil, errors.New(link + " returned HTTP code " + strconv.Itoa(resp.StatusCode))

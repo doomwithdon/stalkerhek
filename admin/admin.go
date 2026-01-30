@@ -1,15 +1,15 @@
 package admin
 
 import (
-    "fmt"
-    "html"
-    "io/ioutil"
-    "net/http"
-    "os"
-    "strconv"
+	"fmt"
+	"html"
+	"net/http"
+	"os"
+	"strconv"
+	"time"
 
-    "github.com/CrazeeGhost/stalkerhek/stalker"
-    yaml "gopkg.in/yaml.v2"
+	"github.com/CrazeeGhost/stalkerhek/stalker"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // config holds a pointer to the in‑memory configuration.  It is updated
@@ -34,17 +34,20 @@ func Start(c *stalker.Config, path string) {
     config = c
     configPath = path
 
-    // Register handlers.  We intentionally use absolute paths to
-    // simplify linking.  The root and /config paths are mapped to the
-    // same handler so that visiting the base URL serves the form.
-    http.HandleFunc("/", handleConfig)
-    http.HandleFunc("/config", handleConfig)
-    http.HandleFunc("/restart", handleRestart)
+    mux := http.NewServeMux()
+    mux.HandleFunc("/", handleConfig)
+    mux.HandleFunc("/config", handleConfig)
+    mux.HandleFunc("/restart", handleRestart)
 
-    // Start the HTTP server.  Errors from ListenAndServe will stop
-    // the admin goroutine but should not panic the entire process, so
-    // we simply log them via fmt.Println.
-    if err := http.ListenAndServe(c.Admin.Bind, nil); err != nil {
+    server := &http.Server{
+        Addr:              c.Admin.Bind,
+        Handler:           mux,
+        ReadHeaderTimeout: 5 * time.Second,
+        ReadTimeout:       15 * time.Second,
+        WriteTimeout:      30 * time.Second,
+        IdleTimeout:       60 * time.Second,
+    }
+    if err := server.ListenAndServe(); err != nil {
         fmt.Println("admin server error:", err)
     }
 }
@@ -58,6 +61,7 @@ func Start(c *stalker.Config, path string) {
 func handleConfig(w http.ResponseWriter, r *http.Request) {
     switch r.Method {
     case http.MethodGet:
+        w.Header().Set("Content-Type", "text/html; charset=utf-8")
         // Render simple HTML form with current configuration values.
         fmt.Fprintf(w, "<html><body><h2>Stalker Portal Configuration</h2><form method=\"POST\" action=\"/config\">")
         fmt.Fprintf(w, "Model: <input name=\"model\" value=\"%s\"><br>", config.Portal.Model)
@@ -116,8 +120,9 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
         config.Portal.UserAgent = r.FormValue("user_agent")
         // Marshal updated configuration back to YAML and write to file
         if out, err := yaml.Marshal(config); err == nil {
-            ioutil.WriteFile(configPath, out, 0644)
+            os.WriteFile(configPath, out, 0644)
         }
+        w.Header().Set("Content-Type", "text/html; charset=utf-8")
         fmt.Fprintf(w, "<html><body>Configuration updated.<br><a href=\"/\">Back</a></body></html>")
     default:
         // Only GET and POST are supported
@@ -134,6 +139,7 @@ func handleRestart(w http.ResponseWriter, r *http.Request) {
         w.WriteHeader(http.StatusMethodNotAllowed)
         return
     }
+    w.Header().Set("Content-Type", "text/html; charset=utf-8")
     // Inform the user that the restart is in progress.  We flush the
     // response so the browser receives it before the process exits.
     fmt.Fprintf(w, "<html><body>Restarting...</body></html>")

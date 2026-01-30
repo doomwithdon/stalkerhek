@@ -2,9 +2,9 @@ package stalker
 
 import (
 	"errors"
-	"io/ioutil"
 	"log"
 	"math/rand"
+	"os"
 	"regexp"
 	"strings"
 
@@ -68,7 +68,7 @@ type Portal struct {
 
 // ReadConfig returns configuration from the file in Portal object
 func ReadConfig(path *string) (*Config, error) {
-	content, err := ioutil.ReadFile(*path)
+	content, err := os.ReadFile(*path)
 	if err != nil {
 		return nil, err
 	}
@@ -123,11 +123,8 @@ func (c *Config) validateWithDefaults() error {
 		return errors.New("invalid timezone '" + c.Portal.TimeZone + "'")
 	}
 
-    // at least one functional service must be enabled.  The admin UI on its
-    // own is not enough to provide IPTV streams or proxy functionality, so
-    // ensure either the HLS or the Proxy service is turned on.  Admin may
-    // optionally be enabled alongside those services.
-    if !c.HLS.Enabled && !c.Proxy.Enabled {
+    // allow admin-only mode; otherwise require at least one service
+    if !c.HLS.Enabled && !c.Proxy.Enabled && !c.Admin.Enabled {
         return errors.New("no services enabled")
     }
 

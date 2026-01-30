@@ -57,7 +57,8 @@ func logoHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Retrieve from Stalker middleware if no cache is present
 	if len(cr.ChannelRef.Logo.Cache) == 0 {
-		img, contentType, err := download(cr.ChannelRef.Logo.Link)
+		portal := cr.ChannelRef.StalkerChannel.Portal
+		img, contentType, err := download(cr.ChannelRef.Logo.Link, portal)
 		if err != nil {
 			cr.ChannelRef.Logo.Mux.Unlock()
 			http.Error(w, "internal server error", http.StatusInternalServerError)

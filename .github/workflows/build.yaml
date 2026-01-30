@@ -1,0 +1,57 @@
+name: build
+
+on:
+  push:
+    branches: [ "*" ]
+    tags: [ "v*" ]
+  pull_request:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - { goarch: amd64, alias: x86_64 }
+          - { goarch: arm64, alias: aarch64 }
+
+    env:
+      GOOS: linux
+      GOARCH: ${{ matrix.arch.goarch }}
+      CGO_ENABLED: 0
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.20.x"
+          cache: true
+
+      - name: Cache Go build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download modules
+        run: go mod download
+
+      - name: Build
+        run: |
+          mkdir -p dist
+          go build -ldflags="-s -w" -o dist/stalkerhek-linux-${{ matrix.arch.alias }} ./cmd/stalkerhek
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stalkerhek-linux-${{ matrix.arch.alias }}
+          path: dist/stalkerhek-linux-${{ matrix.arch.alias }}
+          if-no-files-found: error

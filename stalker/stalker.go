@@ -71,20 +71,28 @@ func (p *Portal) httpRequest(link string) ([]byte, error) {
 	req.Header.Set("Connection", "keep-alive")
 	req.Header.Set("X-User-Agent", "Model: "+p.Model+"; Link: Ethernet")
 	req.Header.Set("Authorization", "Bearer "+p.Token)
-	// Add Origin/Referer/X-Requested-With to better mimic browser requests
+	// Add browser-like headers
 	if u, err := url.Parse(p.Location); err == nil {
 		req.Header.Set("Origin", u.Scheme+"://"+u.Host)
+		req.Header.Set("Referer", p.Location)
 	}
-	req.Header.Set("Referer", p.Location)
 	req.Header.Set("X-Requested-With", "XMLHttpRequest")
+	req.Header.Set("Cache-Control", "no-cache")
+	req.Header.Set("Pragma", "no-cache")
+	req.Header.Set("Sec-Fetch-Dest", "empty")
+	req.Header.Set("Sec-Fetch-Mode", "cors")
+	req.Header.Set("Sec-Fetch-Site", "same-origin")
+	req.Header.Set("Sec-CH-UA", `"Chromium";v="114", "Not.A/Brand";v="24"`)
+	req.Header.Set("Sec-CH-UA-Mobile", "?0")
+	req.Header.Set("Sec-CH-UA-Platform", `"Windows"`)
 
-	cookieText := "PHPSESSID=null; sn=" + url.QueryEscape(p.SerialNumber) + "; mac=" + url.QueryEscape(p.MAC) + "; stb_lang=en; timezone=" + url.QueryEscape(p.TimeZone) + ";"
-	// Append user‑supplied cookies (e.g. cf_clearance) when present.
+	// Build cookies (omit PHPSESSID=null)
+	cookieText := "sn=" + url.QueryEscape(p.SerialNumber) + "; mac=" + url.QueryEscape(p.MAC) + "; stb_lang=en; timezone=" + url.QueryEscape(p.TimeZone) + ";"
 	if p.Cookies != "" {
 		if !strings.HasSuffix(cookieText, ";") {
 			cookieText += ";"
 		}
-		cookieText += " " + strings.TrimSpace(p.Cookies)
+		cookieText += " " + p.Cookies
 	}
 	req.Header.Set("Cookie", cookieText)
 

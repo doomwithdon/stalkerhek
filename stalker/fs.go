@@ -2,9 +2,10 @@ package stalker
 
 import (
 	"errors"
+	"io/ioutil"
 	"log"
 	"math/rand"
-	"os"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -68,7 +69,7 @@ type Portal struct {
 
 // ReadConfig returns configuration from the file in Portal object
 func ReadConfig(path *string) (*Config, error) {
-	content, err := os.ReadFile(*path)
+	content, err := ioutil.ReadFile(*path)
 	if err != nil {
 		return nil, err
 	}
@@ -118,12 +119,21 @@ func (c *Config) validateWithDefaults() error {
 	if c.Portal.Location == "" {
 		return errors.New("empty portal url")
 	}
+	// Accept bare hosts like "new.gprod.co" and keep as base URL.
+	normURL, err := normalizePortalURL(c.Portal.Location)
+	if err != nil {
+		return err
+	}
+	c.Portal.Location = normURL
 
 	if !regexTimezone.MatchString(c.Portal.TimeZone) {
 		return errors.New("invalid timezone '" + c.Portal.TimeZone + "'")
 	}
 
-    // allow admin-only mode; otherwise require at least one service
+    // at least one functional service must be enabled.  The admin UI on its
+    // own is not enough to provide IPTV streams or proxy functionality, so
+    // ensure either the HLS or the Proxy service is turned on.  Admin may
+    // optionally be enabled alongside those services.
     if !c.HLS.Enabled && !c.Proxy.Enabled && !c.Admin.Enabled {
         return errors.New("no services enabled")
     }
@@ -151,6 +161,28 @@ func (c *Config) validateWithDefaults() error {
 	}
 
 	return nil
+}
+
+// normalizePortalURL converts host-only or partial inputs into a valid URL
+// with a scheme, but does not append any fixed path. The portal may redirect
+// to its preferred endpoint (e.g., /stalker_portal/server/load.php).
+func normalizePortalURL(raw string) (string, error) {
+	uStr := strings.TrimSpace(raw)
+	if uStr == "" {
+		return "", errors.New("empty portal url")
+	}
+	if !strings.Contains(uStr, "://") {
+		uStr = "https://" + uStr
+	}
+	u, err := url.Parse(uStr)
+	if err != nil {
+		return "", err
+	}
+	if u.Host == "" {
+		return "", errors.New("invalid portal url: missing host")
+	}
+	// Keep user-provided path/query as-is; do not force load.php.
+	return u.String(), nil
 }
 
 func randomToken() string {

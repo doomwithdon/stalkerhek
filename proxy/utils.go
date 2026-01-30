@@ -20,12 +20,12 @@ func getRequest(link string, originalRequest *http.Request) (*http.Response, err
 		case "Authorization":
 			req.Header.Set("Authorization", "Bearer "+config.Portal.Token)
 		case "Cookie":
-			cookieText := "PHPSESSID=null; sn=" + url.QueryEscape(config.Portal.SerialNumber) + "; mac=" + url.QueryEscape(config.Portal.MAC) + "; stb_lang=en; timezone=" + url.QueryEscape(config.Portal.TimeZone) + ";"
+			cookieText := "sn=" + url.QueryEscape(config.Portal.SerialNumber) + "; mac=" + url.QueryEscape(config.Portal.MAC) + "; stb_lang=en; timezone=" + url.QueryEscape(config.Portal.TimeZone) + ";"
 			if config.Portal.Cookies != "" {
 				if !strings.HasSuffix(cookieText, ";") {
 					cookieText += ";"
 				}
-				cookieText += " " + strings.TrimSpace(config.Portal.Cookies)
+				cookieText += " " + config.Portal.Cookies
 			}
 			req.Header.Set("Cookie", cookieText)
 		case "Referer":
@@ -35,13 +35,23 @@ func getRequest(link string, originalRequest *http.Request) (*http.Response, err
 		}
 	}
 
+	// Override/add browser-like headers
 	if config.Portal.UserAgent != "" {
 		req.Header.Set("User-Agent", config.Portal.UserAgent)
 	} else if req.Header.Get("User-Agent") == "" {
-		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")
 	}
+	req.Header.Set("Accept", "*/*")
+	req.Header.Set("X-Requested-With", "XMLHttpRequest")
+	req.Header.Set("Cache-Control", "no-cache")
+	req.Header.Set("Pragma", "no-cache")
+	req.Header.Set("Sec-Fetch-Dest", "empty")
+	req.Header.Set("Sec-Fetch-Mode", "cors")
+	req.Header.Set("Sec-Fetch-Site", "same-origin")
 
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
 	return stalker.DoWithCFRetry(client, req, stalker.CFRetryMaxAttempts)
 }
 

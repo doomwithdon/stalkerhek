@@ -2,7 +2,6 @@ package stalker
 
 import (
 	"encoding/json"
-	"errors"
 	"log"
 	"net/url"
 	"strings"
@@ -72,7 +71,22 @@ func (c *Channel) Logo() string {
 	if c.LogoLink == "" {
 		return ""
 	}
-	return c.Portal.Location + "misc/logos/320/" + c.LogoLink // hardcoded path - fixme?
+	// Derive portal root. If /stalker_portal/ exists in path, keep up to it;
+	// otherwise default to /stalker_portal/ at the host root.
+	u, err := url.Parse(c.Portal.Location)
+	if err != nil || u.Host == "" {
+		// Fallback: append a safe default path
+		base := strings.TrimRight(c.Portal.Location, "/")
+		return base + "/stalker_portal/misc/logos/320/" + c.LogoLink
+	}
+	rootPath := "/stalker_portal/"
+	if idx := strings.Index(u.Path, "/stalker_portal/"); idx != -1 {
+		rootPath = u.Path[:idx+len("/stalker_portal/")]
+	}
+	u.Path = strings.TrimRight(rootPath, "/") + "/misc/logos/320/" + c.LogoLink
+	u.RawQuery = ""
+	u.Fragment = ""
+	return u.String()
 }
 
 // Genre returns a genre title

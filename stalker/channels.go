@@ -2,6 +2,7 @@ package stalker
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/url"
 	"strings"

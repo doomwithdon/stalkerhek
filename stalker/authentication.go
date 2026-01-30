@@ -41,22 +41,32 @@ func (p *Portal) handshake() error {
 		cookieText += " " + strings.TrimSpace(p.Cookies)
 	}
     req.Header.Set("Cookie", cookieText)
+    // Add Origin/Referer/X-Requested-With to look like a browser XHR
+    if u, err := url.Parse(p.Location); err == nil {
+        req.Header.Set("Origin", u.Scheme+"://"+u.Host)
+    }
+    req.Header.Set("Referer", p.Location)
+    req.Header.Set("X-Requested-With", "XMLHttpRequest")
 
 	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := DoWithCFRetry(client, req, CFRetryMaxAttempts)
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
+
 	contents, err := io.ReadAll(resp.Body)
     if err != nil {
         return err
     }
-    // Reject HTML responses which likely indicate that access has been blocked.
+    // Improve HTML/Cloudflare detection and guidance
     if len(contents) > 0 && contents[0] == '<' {
-        // Log the HTML content to aid debugging.
+        body := strings.ToLower(string(contents))
         log.Println(string(contents))
-        return errors.New("stalker handshake returned HTML (possibly due to Cloudflare or invalid token)")
+        if strings.Contains(body, "cloudflare") || strings.Contains(body, "cf_clearance") {
+            return errors.New("cloudflare challenge detected: set portal.cookies with cf_clearance and portal.user_agent")
+        }
+        return errors.New("stalker handshake returned HTML (invalid token or blocked)")
     }
     if err = json.Unmarshal(contents, &tmp); err != nil {
         log.Println(string(contents))

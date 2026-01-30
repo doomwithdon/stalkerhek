@@ -71,6 +71,12 @@ func (p *Portal) httpRequest(link string) ([]byte, error) {
 	req.Header.Set("Connection", "keep-alive")
 	req.Header.Set("X-User-Agent", "Model: "+p.Model+"; Link: Ethernet")
 	req.Header.Set("Authorization", "Bearer "+p.Token)
+	// Add Origin/Referer/X-Requested-With to better mimic browser requests
+	if u, err := url.Parse(p.Location); err == nil {
+		req.Header.Set("Origin", u.Scheme+"://"+u.Host)
+	}
+	req.Header.Set("Referer", p.Location)
+	req.Header.Set("X-Requested-With", "XMLHttpRequest")
 
 	cookieText := "PHPSESSID=null; sn=" + url.QueryEscape(p.SerialNumber) + "; mac=" + url.QueryEscape(p.MAC) + "; stb_lang=en; timezone=" + url.QueryEscape(p.TimeZone) + ";"
 	// Append user‑supplied cookies (e.g. cf_clearance) when present.
@@ -82,11 +88,14 @@ func (p *Portal) httpRequest(link string) ([]byte, error) {
 	}
 	req.Header.Set("Cookie", cookieText)
 
-	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := DoWithCFRetry(client, req, CFRetryMaxAttempts)
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
+
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, errors.New("Site '" + link + "' returned " + resp.Status)
@@ -94,6 +103,13 @@ func (p *Portal) httpRequest(link string) ([]byte, error) {
 	contents, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
+	}
+	// If we received an HTML body that looks like Cloudflare, provide a clear hint
+	if len(contents) > 0 && contents[0] == '<' {
+		lower := strings.ToLower(string(contents))
+		if strings.Contains(lower, "cloudflare") || strings.Contains(lower, "cf_clearance") {
+			return nil, errors.New("cloudflare challenge detected: set portal.cookies with cf_clearance and portal.user_agent")
+		}
 	}
 	return contents, nil
 }
